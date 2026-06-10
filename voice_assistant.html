@@ -1,0 +1,964 @@
+{% extends "base.html" %}
+{% block title %}Voice Assistant — HealthSathi{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ═══════════════════════════════════════════
+   VOICE ASSISTANT — Premium UI
+═══════════════════════════════════════════ */
+
+.va-page {
+  min-height: calc(100vh - var(--nav-h));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 60px;
+  gap: 0;
+}
+
+/* ── Header ── */
+.va-header {
+  text-align: center;
+  margin-bottom: 36px;
+  animation: fadeUp .5s ease forwards;
+}
+.va-header .cap {
+  display: block;
+  margin-bottom: 10px;
+  letter-spacing: .14em;
+}
+.va-header h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+.va-header p {
+  color: var(--t2);
+  font-size: 1rem;
+}
+
+/* ── Waveform ── */
+.va-wave {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 52px;
+  margin-bottom: 32px;
+  opacity: 0;
+  transition: opacity .4s;
+}
+.va-wave.on { opacity: 1; }
+.va-wave span {
+  display: block;
+  width: 5px;
+  min-height: 5px;
+  border-radius: 5px;
+  background: var(--green2);
+}
+.va-wave.listen span { animation: wv .65s ease-in-out infinite alternate; }
+.va-wave.speak  span { background: var(--cyan2); animation: wv .45s ease-in-out infinite alternate; }
+.va-wave span:nth-child(1)  { animation-delay:.00s; }
+.va-wave span:nth-child(2)  { animation-delay:.06s; }
+.va-wave span:nth-child(3)  { animation-delay:.12s; }
+.va-wave span:nth-child(4)  { animation-delay:.18s; }
+.va-wave span:nth-child(5)  { animation-delay:.24s; }
+.va-wave span:nth-child(6)  { animation-delay:.30s; }
+.va-wave span:nth-child(7)  { animation-delay:.24s; }
+.va-wave span:nth-child(8)  { animation-delay:.18s; }
+.va-wave span:nth-child(9)  { animation-delay:.12s; }
+.va-wave span:nth-child(10) { animation-delay:.06s; }
+.va-wave span:nth-child(11) { animation-delay:.00s; }
+.va-wave span:nth-child(12) { animation-delay:.04s; }
+@keyframes wv { from{height:5px} to{height:46px} }
+
+/* ── Mic zone ── */
+.va-mic-zone {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 28px;
+  flex-shrink: 0;
+}
+.va-ring {
+  position: absolute;
+  border-radius: 50%;
+  transition: all .35s ease;
+}
+.va-ring.r1 {
+  width: 220px; height: 220px;
+  border: 1px solid rgba(34,197,94,.12);
+}
+.va-ring.r2 {
+  width: 172px; height: 172px;
+  border: 1px solid rgba(34,197,94,.18);
+}
+.va-ring.r3 {
+  width: 128px; height: 128px;
+  border: 1px solid rgba(34,197,94,.26);
+}
+
+/* Listening ring animations */
+.va-mic-zone.listening .va-ring.r1 { animation: ringExp 1.6s ease-in-out infinite; }
+.va-mic-zone.listening .va-ring.r2 { animation: ringExp 1.6s ease-in-out infinite .28s; }
+.va-mic-zone.listening .va-ring.r3 { animation: ringExp 1.6s ease-in-out infinite .56s; }
+@keyframes ringExp {
+  0%   { transform: scale(1);    opacity: .7; }
+  100% { transform: scale(1.35); opacity: 0;  }
+}
+
+.va-mic-btn {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 1;
+  transition: all .25s ease;
+  border: 2.5px solid var(--green);
+  background: linear-gradient(135deg,
+    rgba(34,197,94,.18),
+    rgba(34,211,238,.12)
+  );
+  color: var(--green2);
+  box-shadow:
+    0 0 0 0 rgba(34,197,94,0),
+    inset 0 0 20px rgba(34,197,94,.06);
+}
+.va-mic-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 50px rgba(34,197,94,.35);
+}
+.va-mic-btn.listening {
+  border-color: var(--green2);
+  background: linear-gradient(135deg,
+    rgba(34,197,94,.28),
+    rgba(34,211,238,.22)
+  );
+  animation: micPulse 1.3s ease-in-out infinite;
+  box-shadow: 0 0 60px rgba(34,197,94,.45);
+}
+.va-mic-btn.processing {
+  border-color: var(--amber);
+  color: var(--amber);
+  animation: spin .9s linear infinite;
+}
+.va-mic-btn.speaking {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 50px rgba(34,211,238,.35);
+}
+@keyframes micPulse {
+  0%,100% { box-shadow: 0 0 40px rgba(34,197,94,.3); }
+  50%      { box-shadow: 0 0 80px rgba(34,197,94,.65); }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Status pill ── */
+.va-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 22px;
+  border-radius: 50px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  margin-bottom: 36px;
+  transition: all .3s;
+  min-width: 200px;
+  justify-content: center;
+}
+.va-status-pill.listening  { background: var(--gd);   border-color: rgba(34,197,94,.3); }
+.va-status-pill.processing { background: var(--amb-d); border-color: rgba(245,158,11,.3); }
+.va-status-pill.speaking   { background: var(--cd);   border-color: rgba(34,211,238,.3); }
+.va-status-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--t3);
+  transition: background .3s;
+  flex-shrink: 0;
+}
+.va-status-pill.listening  .va-status-dot { background: var(--green2); animation: pulse 1s infinite; }
+.va-status-pill.processing .va-status-dot { background: var(--amber);  animation: pulse .5s infinite; }
+.va-status-pill.speaking   .va-status-dot { background: var(--cyan2); }
+.va-status-text {
+  font-family: 'Syne', sans-serif;
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--t2);
+  transition: color .3s;
+}
+.va-status-pill.listening  .va-status-text { color: var(--green2); }
+.va-status-pill.processing .va-status-text { color: var(--amber); }
+.va-status-pill.speaking   .va-status-text { color: var(--cyan2); }
+
+/* ── Transcript cards ── */
+.va-transcript {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+.va-card {
+  border-radius: 16px;
+  padding: 18px 22px;
+  animation: fadeUp .35s ease forwards;
+  line-height: 1.7;
+  font-size: 1rem;
+}
+.va-card-label {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.va-user-card {
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--border2);
+}
+.va-user-card .va-card-label { color: var(--t3); }
+
+.va-ai-card {
+  background: linear-gradient(135deg,
+    rgba(34,197,94,.08),
+    rgba(34,211,238,.05)
+  );
+  border: 1px solid rgba(34,197,94,.25);
+}
+.va-ai-card .va-card-label { color: var(--green2); }
+.va-ai-card .va-card-text   { color: var(--t1); font-size: 1.05rem; }
+
+.va-processing-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--t2);
+}
+.va-proc-dots span {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green2);
+  margin-right: 5px;
+  animation: dotBounce .8s ease-in-out infinite alternate;
+}
+.va-proc-dots span:nth-child(2) { animation-delay: .2s; }
+.va-proc-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes dotBounce {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(-9px); opacity: .3; }
+}
+.va-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.va-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 1px solid #8bd9d0;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.35);
+    color: #4f6f75;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    width: auto;
+    min-width: fit-content;
+    max-width: fit-content;
+}
+
+.va-chip:hover {
+    background: #8bd9d0;
+    color: white;
+}
+
+/* Intent badge */
+.intent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 11px;
+  border-radius: 50px;
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-top: 8px;
+}
+.ib-symptom   { background: var(--gd);    color: var(--green2); border: 1px solid rgba(34,197,94,.2); }
+.ib-emergency { background: var(--red-d); color: var(--red2);   border: 1px solid rgba(239,68,68,.2); }
+.ib-disease   { background: var(--cd);    color: var(--cyan2);  border: 1px solid rgba(34,211,238,.2); }
+.ib-greeting  { background: var(--ind-d); color: var(--ind2);   border: 1px solid rgba(99,102,241,.2); }
+.ib-unknown   { background: var(--glass); color: var(--t3);     border: 1px solid var(--border); }
+
+/* ── Shortcut hint ── */
+.va-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .78rem;
+  color: var(--t3);
+  margin-bottom: 36px;
+}
+.key-badge {
+  padding: 2px 9px;
+  border-radius: 5px;
+  background: var(--glass2);
+  border: 1px solid var(--border2);
+  font-family: monospace;
+  font-size: .78rem;
+  color: var(--t2);
+}
+
+/* ── Quick chips section ── */
+.va-chips-section {
+  width: 100%;
+  max-width: 720px;
+}
+.va-chips-label {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: 14px;
+  display: block;
+}
+.va-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.va-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 50px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  font-size: .82rem;
+  font-weight: 500;
+  color: var(--t2);
+  cursor: pointer;
+  transition: all .2s ease;
+  white-space: nowrap;
+}
+.va-chip:hover {
+  color: var(--green2);
+  border-color: var(--green);
+  background: var(--gd);
+  transform: translateY(-2px);
+}
+.va-chip.emergency:hover {
+  color: var(--red2);
+  border-color: var(--red);
+  background: var(--red-d);
+}
+.va-chip span { font-size: .9rem; }
+
+/* ── History panel ── */
+.va-history {
+  width: 100%;
+  max-width: 720px;
+  margin-top: 40px;
+}
+.va-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.va-history-head h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.va-clear-btn {
+  font-size: .76rem;
+  color: var(--t3);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 50px;
+  border: 1px solid var(--border);
+  transition: .2s;
+}
+.va-clear-btn:hover { color: var(--red2); border-color: var(--red2); }
+.va-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.va-history-item {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.va-history-ico { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.va-history-txt .q { font-size: .84rem; font-weight: 600; color: var(--t1); }
+.va-history-txt .a { font-size: .78rem; color: var(--t2); margin-top: 3px; }
+.va-history-time { margin-left: auto; font-size: .68rem; color: var(--t3); white-space: nowrap; }
+
+@media(max-width:600px) {
+  .va-mic-zone { width:180px; height:180px; }
+  .va-ring.r1  { width:180px; height:180px; }
+  .va-ring.r2  { width:140px; height:140px; }
+  .va-ring.r3  { width:104px; height:104px; }
+  .va-mic-btn  { width:78px; height:78px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="va-page">
+
+  <!-- Header -->
+  <div class="va-header">
+    <span class="cap">🤖 AI Powered Voice System</span>
+    <h1><span class="grad">Awaaz</span> Sahayak</h1>
+    <p>Hindi • English • Hinglish — Sab samjha jaata hai</p>
+  </div>
+
+  <!-- Waveform -->
+  <div class="va-wave" id="vaWave">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span>
+  </div>
+
+  <!-- Mic button -->
+  <div class="va-mic-zone" id="vaMicZone">
+    <div class="va-ring r1"></div>
+    <div class="va-ring r2"></div>
+    <div class="va-ring r3"></div>
+    <button class="va-mic-btn" id="vaMicBtn" title="Click or press Space">
+      <!-- Mic icon -->
+      <svg id="vaIconMic" width="38" height="38" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+        <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+      </svg>
+      <!-- Stop icon (listening) -->
+      <svg id="vaIconStop" class="hidden" width="28" height="28"
+           viewBox="0 0 24 24" fill="currentColor">
+        <rect x="6" y="6" width="12" height="12" rx="3"/>
+      </svg>
+      <!-- Spinner (processing) -->
+      <svg id="vaIconSpin" class="hidden" width="32" height="32"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+      </svg>
+      <!-- Speaker icon (speaking) -->
+      <svg id="vaIconSpeak" class="hidden" width="34" height="34"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Status pill -->
+  <div class="va-status-pill" id="vaStatusPill">
+    <span class="va-status-dot"></span>
+    <span class="va-status-text" id="vaStatusText">Tap mic ya Space dabayein</span>
+  </div>
+
+  <!-- Keyboard shortcut hint -->
+  <div class="va-shortcut">
+    <span class="key-badge">Space</span> to start/stop
+    <span style="margin:0 4px">•</span>
+    <span class="key-badge">Esc</span> to cancel
+  </div>
+
+  <!-- Transcript area -->
+  <div class="va-transcript" id="vaTranscript">
+
+    <!-- Live partial text -->
+    <div class="va-card va-user-card hidden" id="vaUserCard">
+      <div class="va-card-label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        Aapne Kaha
+      </div>
+      <div class="va-card-text" id="vaUserText"></div>
+    </div>
+
+    <!-- Processing -->
+    <div class="va-card va-processing-card hidden" id="vaProcessCard">
+      <div class="va-proc-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <span>AI soch raha hai...</span>
+    </div>
+
+    <!-- AI response -->
+    <div class="va-card va-ai-card hidden" id="vaAiCard">
+      <div class="va-card-label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        HealthSathi AI
+      </div>
+      <div class="va-card-text" id="vaAiText"></div>
+      <div id="vaIntentBadge" style="margin-top:10px"></div>
+    </div>
+
+  </div>
+
+  <!-- Quick symptom chips -->
+  <div class="va-chips-section">
+    <span class="va-chips-label">⚡ Quick Test — Click to Try</span>
+
+    <div class="va-chips">
+      <div class="va-chip" onclick="quickTest('mujhe bukhar hai')"><span>🌡️</span> Bukhar</div>
+
+      <div class="va-chip" onclick="quickTest('sir dard ho raha hai')"><span>🤕</span> Sir Dard</div>
+
+      <div class="va-chip" onclick="quickTest('khansi ho rahi hai')"><span>😤</span> Khansi</div>
+
+      <div class="va-chip" onclick="quickTest('pet mein dard hai')"><span>🤢</span> Pet Dard</div>
+
+      <div class="va-chip" onclick="quickTest('kamzori lag rahi hai')"><span>💪</span> Kamzori</div>
+
+      <div class="va-chip" onclick="quickTest('chakkar aa rahe hain')"><span>😵</span> Chakkar</div>
+
+
+      <div class="va-chip" onclick="quickTest('saans lene mein takleef')"><span>😮‍💨</span> Saans</div>
+
+      <div class="va-chip" onclick="quickTest('dehydration ho rahi hai')"><span>💧</span> Dehydration</div>
+
+      <div class="va-chip" onclick="quickTest('dengue ke baare mein batao')"><span>🦟</span> Dengue</div>
+
+      <div class="va-chip" onclick="quickTest('malaria symptoms')"><span>🦟</span> Malaria</div>
+
+      <div class="va-chip" onclick="quickTest('diabetes symptoms')"><span>🩸</span> Diabetes</div>
+
+      <div class="va-chip" onclick="quickTest('typhoid ke baare mein')"><span>🌡️</span> Typhoid</div>
+
+      <div class="va-chip" onclick="quickTest('blood pressure high hai')"><span>💊</span> BP High</div>
+
+      <div class="va-chip" onclick="quickTest('anxiety ho rahi hai')"><span>🧠</span> Anxiety</div>
+
+      <div class="va-chip emergency" onclick="quickTest('heart attack first aid')"><span>❤️</span> Heart Attack</div>
+
+      <div class="va-chip emergency" onclick="quickTest('snake bite first aid')"><span>🐍</span> Snake Bite</div>
+
+      <div class="va-chip emergency" onclick="quickTest('choking first aid')"><span>🚨</span> Choking</div>
+
+      <div class="va-chip" onclick="quickTest('namaste')"><span>🙏</span> Namaste</div>
+
+      <div class="va-chip" onclick="quickTest('how are you')"><span>😊</span> How r u</div>
+
+      <div class="va-chip" onclick="quickTest('tell me a joke')"><span>😂</span> Joke</div>
+  
+      <div class="va-chip" onclick="quickTest('ulti ho rahi hai')"><span>🤮</span> Ulti</div>
+
+<div class="va-chip" onclick="quickTest('gale mein dard hai')"><span>😷</span> Gala Dard</div>
+
+<div class="va-chip" onclick="quickTest('bukhar aur khansi hai')"><span>🤒</span> Viral Fever</div>
+
+<div class="va-chip" onclick="quickTest('seene mein dard hai')"><span>💔</span> Seene Mein Dard</div>
+
+<div class="va-chip" onclick="quickTest('haath pair mein dard hai')"><span>🦴</span> Body Pain</div>
+
+<div class="va-chip" onclick="quickTest('allergy ho rahi hai')"><span>🌼</span> Allergy</div>
+
+<div class="va-chip" onclick="quickTest('pet kharab hai')"><span>🥴</span> Loose Motion</div>
+
+<div class="va-chip" onclick="quickTest('gas aur acidity ho rahi hai')"><span>🔥</span> Acidity</div>
+
+<div class="va-chip" onclick="quickTest('kaan mein dard hai')"><span>👂</span> Ear Pain</div>
+
+<div class="va-chip" onclick="quickTest('aankh mein jalan hai')"><span>👁️</span> Eye Irritation</div>
+
+<div class="va-chip" onclick="quickTest('sardi ho gayi hai')"><span>🤧</span> Cold</div>
+
+<div class="va-chip" onclick="quickTest('peeth mein dard hai')"><span>🪑</span> Back Pain</div>
+
+<div class="va-chip" onclick="quickTest('pair mein sujan hai')"><span>🦵</span> Swelling</div>
+
+<div class="va-chip" onclick="quickTest('kam blood pressure lag raha hai')"><span>🩸</span> Low BP</div>
+
+<div class="va-chip" onclick="quickTest('neend nahi aa rahi')"><span>🌙</span> Insomnia</div>
+
+<div class="va-chip" onclick="quickTest('stress ho raha hai')"><span>😟</span> Stress</div>
+
+<div class="va-chip" onclick="quickTest('period pain ho raha hai')"><span>🩷</span> Period Pain</div>
+
+<div class="va-chip" onclick="quickTest('skin pe daane ho gaye hain')"><span>🧴</span> Skin Rash</div>
+
+<div class="va-chip" onclick="quickTest('daant mein dard hai')"><span>🦷</span> Tooth Pain</div>
+
+<div class="va-chip emergency" onclick="quickTest('burn first aid')"><span>🔥</span> Burn</div>
+
+<div class="va-chip emergency" onclick="quickTest('fracture first aid')"><span>🩹</span> Fracture</div>
+<div class="va-chip emergency" onclick="quickTest('bleeding first aid')"><span>🩸</span> Bleeding</div>
+</div>
+</div>
+
+
+  <!-- Conversation history -->
+  <div class="va-history" id="vaHistory" style="display:none">
+    <div class="va-history-head">
+      <h3>🕐 Haali Conversations</h3>
+      <button class="va-clear-btn" onclick="clearHistory()">Clear</button>
+    </div>
+    <div class="va-history-list" id="vaHistoryList"></div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ══════════════════════════════════════════════════════════
+// VOICE ASSISTANT — Complete Implementation
+// ══════════════════════════════════════════════════════════
+
+const vaMicBtn      = document.getElementById('vaMicBtn');
+const vaMicZone     = document.getElementById('vaMicZone');
+const vaStatusPill  = document.getElementById('vaStatusPill');
+const vaStatusText  = document.getElementById('vaStatusText');
+const vaWave        = document.getElementById('vaWave');
+
+const vaUserCard    = document.getElementById('vaUserCard');
+const vaUserText    = document.getElementById('vaUserText');
+const vaProcessCard = document.getElementById('vaProcessCard');
+const vaAiCard      = document.getElementById('vaAiCard');
+const vaAiText      = document.getElementById('vaAiText');
+const vaIntentBadge = document.getElementById('vaIntentBadge');
+
+const iconMic  = document.getElementById('vaIconMic');
+const iconStop = document.getElementById('vaIconStop');
+const iconSpin = document.getElementById('vaIconSpin');
+const iconSpeak= document.getElementById('vaIconSpeak');
+
+let recognition  = null;
+let isListening  = false;
+let isSpeaking   = false;
+let sessionHistory = [];
+
+// ── Set state ──────────────────────────────────────────────
+function setState(s) {
+  // Reset all
+  vaMicBtn.classList.remove('listening','processing','speaking');
+  vaMicZone.classList.remove('listening');
+  vaStatusPill.classList.remove('listening','processing','speaking');
+  vaWave.classList.remove('on','listen','speak');
+  [iconMic,iconStop,iconSpin,iconSpeak].forEach(i => i.classList.add('hidden'));
+
+  const cfg = {
+    idle:       { txt:'Tap mic ya Space dabayein',   icon:iconMic   },
+    listening:  { txt:'Sun raha hoon... bolein',      icon:iconStop  },
+    processing: { txt:'AI soch raha hai...',           icon:iconSpin  },
+    speaking:   { txt:'Bol raha hoon...',              icon:iconSpeak },
+    error:      { txt:'Kuch gadbad hui. Dobara try karein', icon:iconMic },
+  };
+  const c = cfg[s] || cfg.idle;
+  vaStatusText.textContent = c.txt;
+  c.icon.classList.remove('hidden');
+
+  if (s === 'listening') {
+    vaMicBtn.classList.add('listening');
+    vaMicZone.classList.add('listening');
+    vaStatusPill.classList.add('listening');
+    vaWave.classList.add('on','listen');
+  } else if (s === 'processing') {
+    vaMicBtn.classList.add('processing');
+    vaStatusPill.classList.add('processing');
+  } else if (s === 'speaking') {
+    vaMicBtn.classList.add('speaking');
+    vaStatusPill.classList.add('speaking');
+    vaWave.classList.add('on','speak');
+  }
+}
+
+// ── Intent badge ───────────────────────────────────────────
+function showIntentBadge(intent) {
+  if (!intent || intent === 'empty') {
+    vaIntentBadge.innerHTML = '';
+    return;
+  }
+  const map = {
+    symptom:   ['ib-symptom',   '🩺 Symptom'],
+    disease:   ['ib-disease',   '🦠 Disease'],
+    emergency: ['ib-emergency', '🚨 Emergency'],
+    greeting:  ['ib-greeting',  '👋 Greeting'],
+    health:    ['ib-symptom',   '💊 Health'],
+    how_are_you:['ib-greeting', '😊 Chat'],
+    about:     ['ib-greeting',  'ℹ️ About'],
+    joke:      ['ib-greeting',  '😄 Joke'],
+    help:      ['ib-greeting',  '💡 Help'],
+  };
+  const [cls, label] = map[intent] || ['ib-unknown', intent];
+  vaIntentBadge.innerHTML = `<span class="intent-badge ${cls}">${label}</span>`;
+}
+
+// ── Browser TTS ────────────────────────────────────────────
+function speakText(text) {
+  if (!('speechSynthesis' in window)) return Promise.resolve();
+  return new Promise(resolve => {
+    window.speechSynthesis.cancel();
+    const utt   = new SpeechSynthesisUtterance(text);
+    utt.lang    = 'hi-IN';
+    utt.rate    = 0.88;
+    utt.pitch   = 1.05;
+    utt.volume  = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const hindi  = voices.find(v => v.lang === 'hi-IN' || v.lang === 'hi');
+    const indian = voices.find(v => v.lang === 'en-IN');
+    if (hindi) utt.voice = hindi;
+    else if (indian) utt.voice = indian;
+    utt.onstart = () => { isSpeaking = true; setState('speaking'); };
+    utt.onend   = () => { isSpeaking = false; setState('idle');    resolve(); };
+    utt.onerror = () => { isSpeaking = false; setState('idle');    resolve(); };
+    window.speechSynthesis.speak(utt);
+    setState('speaking');
+  });
+}
+
+// ── Typewriter effect for AI response ─────────────────────
+function typeWriter(el, text, speed) {
+  el.textContent = '';
+  let i = 0;
+  const t = setInterval(() => {
+    el.textContent += text[i++];
+    if (i >= text.length) clearInterval(t);
+  }, speed || 18);
+}
+
+// ── Send text to Flask API ─────────────────────────────────
+async function sendToAPI(text) {
+  setState('processing');
+  vaUserCard.classList.remove('hidden');
+  vaUserText.textContent = text;
+  vaProcessCard.classList.remove('hidden');
+  vaAiCard.classList.add('hidden');
+
+  try {
+    const res  = await fetch('/process_voice', {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify({text})
+    });
+    const data = await res.json();
+    vaProcessCard.classList.add('hidden');
+
+    const response = data.response || 'Samajh nahi aaya. Dobara bolein.';
+    const intent   = data.intent   || 'unknown';
+
+    vaAiCard.classList.remove('hidden');
+    typeWriter(vaAiText, response, 16);
+    showIntentBadge(intent);
+
+    // Save to session history
+    sessionHistory.unshift({
+      q: text, a: response, intent,
+      time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+    });
+    renderHistory();
+
+    // Speak response
+    await speakText(response);
+
+    // Also call pyttsx3 backend TTS
+    fetch('/api/speak', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text: response})
+    }).catch(() => {});
+
+    setState('idle');
+
+  } catch(err) {
+    vaProcessCard.classList.add('hidden');
+    setState('error');
+    showToast('Server error. Flask chal raha hai?', 'err');
+    setTimeout(() => setState('idle'), 2500);
+  }
+}
+
+// ── Web Speech Recognition ─────────────────────────────────
+async function startListening() {
+  // Check mic permission
+  try {
+    await navigator.mediaDevices.getUserMedia({audio: true});
+  } catch(e) {
+    showToast('Mic permission denied! Browser settings check karein.', 'err');
+    return;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    showToast('Voice not supported. Chrome ya Edge browser use karein.', 'err');
+    return;
+  }
+
+  recognition = new SR();
+  recognition.lang           = 'hi-IN';
+  recognition.interimResults = true;
+  recognition.maxAlternatives= 1;
+  recognition.continuous     = false;
+
+  recognition.onstart = () => {
+    isListening = true;
+    setState('listening');
+    vaUserCard.classList.add('hidden');
+    vaAiCard.classList.add('hidden');
+    vaProcessCard.classList.add('hidden');
+    vaIntentBadge.innerHTML = '';
+    showToast('Sun raha hoon — bolein!', 'ok');
+  };
+
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final   += e.results[i][0].transcript;
+      else                        interim += e.results[i][0].transcript;
+    }
+    if (interim || final) {
+      vaUserCard.classList.remove('hidden');
+      vaUserText.textContent = (final || interim) + (final ? '' : '...');
+    }
+    if (final) {
+      stopListening();
+      sendToAPI(final);
+    }
+  };
+
+  recognition.onerror = (e) => {
+    isListening = false;
+    setState('error');
+    const msgs = {
+      'not-allowed': 'Mic permission nahi mili.',
+      'no-speech':   'Koi awaaz nahi sunai di.',
+      'network':     'Network error.',
+      'aborted':     'Stopped.',
+    };
+    showToast(msgs[e.error] || 'Error: ' + e.error, 'err');
+    setTimeout(() => setState('idle'), 2000);
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    if (vaMicBtn.classList.contains('listening')) setState('idle');
+  };
+
+  recognition.start();
+}
+
+function stopListening() {
+  if (recognition) { recognition.stop(); recognition = null; }
+  isListening = false;
+}
+
+// ── Toggle mic ─────────────────────────────────────────────
+function toggleMic() {
+  if (isSpeaking) {
+    window.speechSynthesis.cancel();
+    isSpeaking = false;
+    setState('idle');
+    return;
+  }
+  if (isListening) {
+    stopListening();
+    setState('idle');
+    return;
+  }
+  startListening();
+}
+
+// ── Quick test ─────────────────────────────────────────────
+function quickTest(text) {
+  stopListening();
+  window.speechSynthesis.cancel();
+  vaUserCard.classList.remove('hidden');
+  vaUserText.textContent = text;
+  sendToAPI(text);
+}
+
+// ── History ────────────────────────────────────────────────
+function renderHistory() {
+  const hist = document.getElementById('vaHistory');
+  const list = document.getElementById('vaHistoryList');
+  if (!sessionHistory.length) { hist.style.display = 'none'; return; }
+  hist.style.display = 'block';
+  list.innerHTML = sessionHistory.slice(0,6).map(h => `
+    <div class="va-history-item">
+      <span class="va-history-ico">${h.intent === 'emergency' ? '🚨' : '🎤'}</span>
+      <div class="va-history-txt">
+        <div class="q">${escHtml(h.q)}</div>
+        <div class="a">${escHtml(h.a.substring(0,80))}${h.a.length > 80 ? '...' : ''}</div>
+      </div>
+      <span class="va-history-time">${h.time}</span>
+    </div>
+  `).join('');
+}
+
+function clearHistory() {
+  sessionHistory = [];
+  renderHistory();
+  fetch('/api/clear_history', {method:'POST'});
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Events ─────────────────────────────────────────────────
+vaMicBtn.addEventListener('click', toggleMic);
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && e.target === document.body) {
+    e.preventDefault(); toggleMic();
+  }
+  if (e.key === 'Escape') {
+    stopListening();
+    window.speechSynthesis.cancel();
+    isSpeaking = false;
+    setState('idle');
+  }
+});
+
+// ── Init ───────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  setState('idle');
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  }
+});
+</script>
+{% endblock %}

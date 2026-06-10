@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}HealthSathi — Aapka Swasthya Dost{% endblock %}
+{% block content %}
+
+<section class="wrap" style="padding-top:0">
+  <div class="hero">
+    <div class="hero-text fade-up">
+      <span class="badge badge-green" style="width:fit-content">
+        <span class="dot-live"></span> 
+      </span>
+      <h1 class="display">
+        Aapka<br><span class="grad">AI Swasthya</span><br>Sahayak
+      </h1>
+      <p class="lead">Bolein, Poochein, Samjhein — Hindi ya English mein.<br> Gaon se sheher tak sabke liye.</p>
+      <div class="hero-cta">
+        <a href="/voice_assistant" class="btn btn-primary btn-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
+          Awaaz se Poochein
+        </a>
+        <a href="/chatbot" class="btn btn-outline btn-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Chat Karein
+        </a>
+      </div>
+    </div>
+
+    <div class="pulse-orb-wrap">
+      <div class="pulse-orb">
+        <div class="p-ring"></div>
+        <div class="p-ring"></div>
+        <div class="p-ring"></div>
+        <div class="p-core">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <div class="p-dots">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Actions -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="cap">Seedha Shuru Karein</span>
+      <h2 class="h2">Quick <span class="grad">Actions</span></h2>
+      <p>Ek click mein apni zaroorat poori karein</p>
+    </div>
+    <div class="qcard-grid">
+      <a href="/voice_assistant" class="qcard qc-green">
+        <div class="qcard-ico">🎤</div>
+        <div class="qcard-body"><h3>Awaaz Sahayak</h3><p>Bol ke apni takleef batayen</p></div>
+        <span class="qcard-arr">→</span>
+      </a>
+      <a href="/chatbot" class="qcard qc-cyan">
+        <div class="qcard-ico">💬</div>
+        <div class="qcard-body"><h3>AI Chat</h3><p>Likh ke sawaal poochein</p></div>
+        <span class="qcard-arr">→</span>
+      </a>
+      <a href="/symptoms" class="qcard qc-blue">
+        <div class="qcard-ico">🩺</div>
+        <div class="qcard-body"><h3>Lakshan Jaanch</h3><p>Apne lakshan dhundein</p></div>
+        <span class="qcard-arr">→</span>
+      </a>
+      <a href="/emergency" class="qcard qc-red">
+        <div class="qcard-ico">🚨</div>
+        <div class="qcard-body"><h3>Aapatkaal Madad</h3><p>First aid aur 108</p></div>
+        <span class="qcard-arr">→</span>
+      </a>
+      <a href="/health_tips" class="qcard qc-violet">
+        <div class="qcard-ico">💡</div>
+        <div class="qcard-body"><h3>Swasthya Tips</h3><p>Roz ki sehat ki salah</p></div>
+        <span class="qcard-arr">→</span>
+      </a>
+      <a href="/about" class="qcard qc-amber">
+        <div class="qcard-ico">ℹ️</div>
+        <div class="qcard-body"><h3>Parichay</h3><p>HealthSathi ke baare mein</p></div>
+        <span class="qcard-arr">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="section" style="padding-top:0">
+  <div class="wrap">
+    <div class="stat-strip">
+      <div class="stat-block">
+        <div class="stat-ico g"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <div><div class="stat-val">250+</div><div class="stat-lbl">Health Entries</div></div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-ico c"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg></div>
+        <div><div class="stat-val">100%</div><div class="stat-lbl">Offline Kaam Karta Hai</div></div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-ico b"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+        <div><div class="stat-val">Hindi</div><div class="stat-lbl">+ English Support</div></div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-ico a"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div><div class="stat-val">24/7</div><div class="stat-lbl">Hamesha Taiyaar</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
